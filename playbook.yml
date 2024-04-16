@@ -1,0 +1,63 @@
+---
+- name: Test de connexion et exécution de commande sur serveur PCOST
+  hosts: start_tomcat
+  become: yes
+  become_user: olcsapad
+
+  tasks:
+    - name: Contrôle du bon démarrage du QMGR avant démarrage de l'application sur {{ ansible_hostname|upper }}
+      shell: "dspmq"
+      register: checkQMGR
+      retries: 8
+      delay: 20
+      until: checkQMGR is search("Running")
+
+    - debug:
+        msg: " {{ checkQMGR.stdout }} "
+      when: checkQMGR is search("Running")
+
+    - name: Failed si QMGR pas en état Running
+      fail:
+        msg: " {{ checkQMGR.stdout }} "
+      when: checkQMGR is not search("Running")
+
+    - name: Démarrage de Tomcat sur la partition {{ ansible_hostname|upper }}
+      block:
+        - name: Vérification des process de Tomcat {{ item.value.name }} avant démarrage
+          shell: "ps -ef |grep {{ PATH_JAVA_BIN }}/{{ item.key }} |grep -v grep|wc -l"
+          register: NombreTomcatProcess
+
+        - name: Vérification si Tomcat est déjà démarré
+          debug:
+            msg:
+              - "Résultat : Tomcat {{ item.value.name }} est déjà démarré sur la partition {{ ansible_hostname|upper }}"
+          when: NombreTomcatProcess.stdout|int > 0
+
+        - block:
+            - name: Exécution du Script de démarrage de Tomcat
+              shell: "source /app/cs/home/{{ user_applicatif }}/.bash_profile ; {{ PATH_TOM_BIN }}/{{ item.value.java }}.sh start"
+              become: yes
+              become_user: "{{ user_applicatif }}"
+
+            - name: Vérification que Tomcat {{ item.value.name }} est bien démarré
+              shell: "ps -ef |grep {{ PATH_JAVA_BIN }}/{{ item.key }} |grep -v grep|wc -l"
+              register: NombreTomcatProcessApres
+              retries: 5
+              until: NombreTomcatProcessApres.stdout|int > 0
+
+            - name: Vérification que Tomcat {{ item.value.name }} est démarré correctement
+              debug:
+                msg:
+                  - "Résultat : Tomcat {{ item.value.name }} est démarré correctement sur la partition {{ ansible_hostname|upper }}"
+              when: NombreTomcatProcessApres.stdout|int > 0
+
+            - name: Échec si Tomcat {{ item.value.name }} n'est pas démarré correctement
+              fail:
+                msg:
+                  - "Résultat : Tomcat {{ item.value.name }} n'est pas démarré correctement sur la partition {{ ansible_hostname|upper }}"
+              when: NombreTomcatProcessApres.stdout|int < 1
+
+          when: NombreTomcatProcess.stdout|int < 1
+      loop: "{{ lookup('dict', Tomcat_JVM)|sort(attribute='value.startid') }}"
+      when: 
+        - item.value.name != "ROUTAGES" or (isCasabic == "yes" and item.value.name == "CASABIC")
