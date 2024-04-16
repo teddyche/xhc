@@ -1,48 +1,667 @@
----
-- name: Test de connexion et exécution de commande sur serveur PCOST
-  hosts: start_tomcat
-  become: yes
-  become_user: olcsapad
+WARN[0000] Failed to mount subscriptions, skipping entry in /usr/share/containers/mounts.conf: getting host subscription data: failed to read subscriptions from "/usr/share/rhel/secrets": open /usr/share/rhel/secrets/redhat.repo: permission denied 
+Using /etc/ansible/ansible.cfg as config file
+SSH password: 
+[WARNING]: Invalid characters were found in group names but not replaced, use
+-vvvv to see details
 
-  tasks:
-    - name: Contrôle du bon démarrage du QMGR avant démarrage de l'application sur {{ ansible_hostname|upper }}
-      shell: "dspmq"
-      register: checkQMGR
-      retries: 8
-      delay: 20
-      until: checkQMGR is search("Running")
+PLAY [Test de connexion et exécution de commande sur serveur PCOST] ************
 
-    - debug:
-        msg: " {{ checkQMGR.stdout }} "
-      when: checkQMGR is search("Running")
+TASK [Gathering Facts] *********************************************************
+ok: [ANS_OLCSAP90]
+ok: [ANS_OLCSAP80]
 
-    - name: Failed si QMGR pas en état Running
-      fail:
-        msg: " {{ checkQMGR.stdout }} "
-      when: checkQMGR is not search("Running")
+TASK [Contrôle du bon démarrage du QMGR avant démarrage de l'application sur OLCSAP80] ***
+changed: [ANS_OLCSAP90] => {"attempts": 1, "changed": true, "cmd": "dspmq", "delta": "0:00:00.028635", "end": "2024-04-16 22:14:09.336279", "rc": 0, "start": "2024-04-16 22:14:09.307644", "stderr": "", "stderr_lines": [], "stdout": "QMNAME(QLCS009O)                                          STATUS(Running)", "stdout_lines": ["QMNAME(QLCS009O)                                          STATUS(Running)"]}
+changed: [ANS_OLCSAP80] => {"attempts": 1, "changed": true, "cmd": "dspmq", "delta": "0:00:00.030268", "end": "2024-04-16 22:14:09.345852", "rc": 0, "start": "2024-04-16 22:14:09.315584", "stderr": "", "stderr_lines": [], "stdout": "QMNAME(QLCS008O)                                          STATUS(Running)", "stdout_lines": ["QMNAME(QLCS008O)                                          STATUS(Running)"]}
 
-    - block:
-        - name: Vérification des process de Tomcat avant démarrage
-          shell: "ps -ef |grep {{ PATH_JAVA_BIN }}/{{ item.key }} |grep -v grep|wc -l"
-          register: NombreTomcatProcess
-          loop: "{{ lookup('dict', Tomcat_JVM)|sort(attribute='value.startid') }}"
-          when: "item.value.name != 'ROUTAGES' or (isCasabic == 'yes' and item.value.name == 'CASABIC')"
-          ignore_errors: yes
+TASK [debug] *******************************************************************
+ok: [ANS_OLCSAP80] => {
+    "msg": " QMNAME(QLCS008O)                                          STATUS(Running) "
+}
+ok: [ANS_OLCSAP90] => {
+    "msg": " QMNAME(QLCS009O)                                          STATUS(Running) "
+}
 
-        - name: Debug NombreTomcatProcess
-          debug:
-            var: NombreTomcatProcess
+TASK [Failed si QMGR pas en état Running] **************************************
+skipping: [ANS_OLCSAP80] => {"changed": false, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => {"changed": false, "skip_reason": "Conditional result was False"}
 
-        - name: Vérification si Tomcat est déjà démarré
-          debug:
-            msg: "Résultat : Tomcat est déjà démarré sur la partition {{ ansible_hostname|upper }}"
-          when: "NombreTomcatProcess.results | default([]) | map(attribute='stdout') | map('default', '0') | map('int') | select('>', 0) | list | count > 0"
+TASK [Vérification des process de Tomcat avant démarrage] **********************
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs6', 'value': {'startid': 1, 'name': 'OUTGOING', 'java': 'cs6'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l", "delta": "0:00:00.092266", "end": "2024-04-16 22:14:10.020940", "item": {"key": "java_srvcs6", "value": {"java": "cs6", "name": "OUTGOING", "startid": 1}}, "rc": 0, "start": "2024-04-16 22:14:09.928674", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs6', 'value': {'startid': 1, 'name': 'OUTGOING', 'java': 'cs6'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l", "delta": "0:00:00.078327", "end": "2024-04-16 22:14:10.049748", "item": {"key": "java_srvcs6", "value": {"java": "cs6", "name": "OUTGOING", "startid": 1}}, "rc": 0, "start": "2024-04-16 22:14:09.971421", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs1', 'value': {'startid': 2, 'name': 'INCOMING', 'java': 'cs1'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l", "delta": "0:00:00.070486", "end": "2024-04-16 22:14:10.392812", "item": {"key": "java_srvcs1", "value": {"java": "cs1", "name": "INCOMING", "startid": 2}}, "rc": 0, "start": "2024-04-16 22:14:10.322326", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs1', 'value': {'startid': 2, 'name': 'INCOMING', 'java': 'cs1'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l", "delta": "0:00:00.068128", "end": "2024-04-16 22:14:10.411721", "item": {"key": "java_srvcs1", "value": {"java": "cs1", "name": "INCOMING", "startid": 2}}, "rc": 0, "start": "2024-04-16 22:14:10.343593", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs3', 'value': {'startid': 3, 'name': 'COMMUN', 'java': 'cs3'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l", "delta": "0:00:00.064218", "end": "2024-04-16 22:14:10.747476", "item": {"key": "java_srvcs3", "value": {"java": "cs3", "name": "COMMUN", "startid": 3}}, "rc": 0, "start": "2024-04-16 22:14:10.683258", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs3', 'value': {'startid': 3, 'name': 'COMMUN', 'java': 'cs3'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l", "delta": "0:00:00.065089", "end": "2024-04-16 22:14:10.762718", "item": {"key": "java_srvcs3", "value": {"java": "cs3", "name": "COMMUN", "startid": 3}}, "rc": 0, "start": "2024-04-16 22:14:10.697629", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs5', 'value': {'startid': 4, 'name': 'BATCHS', 'java': 'cs5'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l", "delta": "0:00:00.062989", "end": "2024-04-16 22:14:11.094935", "item": {"key": "java_srvcs5", "value": {"java": "cs5", "name": "BATCHS", "startid": 4}}, "rc": 0, "start": "2024-04-16 22:14:11.031946", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs5', 'value': {'startid': 4, 'name': 'BATCHS', 'java': 'cs5'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l", "delta": "0:00:00.069734", "end": "2024-04-16 22:14:11.122392", "item": {"key": "java_srvcs5", "value": {"java": "cs5", "name": "BATCHS", "startid": 4}}, "rc": 0, "start": "2024-04-16 22:14:11.052658", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs2', 'value': {'startid': 5, 'name': 'ENVOI', 'java': 'cs2'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l", "delta": "0:00:00.061961", "end": "2024-04-16 22:14:11.441725", "item": {"key": "java_srvcs2", "value": {"java": "cs2", "name": "ENVOI", "startid": 5}}, "rc": 0, "start": "2024-04-16 22:14:11.379764", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs2', 'value': {'startid': 5, 'name': 'ENVOI', 'java': 'cs2'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l", "delta": "0:00:00.066948", "end": "2024-04-16 22:14:11.470888", "item": {"key": "java_srvcs2", "value": {"java": "cs2", "name": "ENVOI", "startid": 5}}, "rc": 0, "start": "2024-04-16 22:14:11.403940", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs7', 'value': {'startid': 6, 'name': 'PcostIHM', 'java': 'cs7'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l", "delta": "0:00:00.065382", "end": "2024-04-16 22:14:11.817707", "item": {"key": "java_srvcs7", "value": {"java": "cs7", "name": "PcostIHM", "startid": 6}}, "rc": 0, "start": "2024-04-16 22:14:11.752325", "stderr": "", "stderr_lines": [], "stdout": "1", "stdout_lines": ["1"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs7', 'value': {'startid': 6, 'name': 'PcostIHM', 'java': 'cs7'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l", "delta": "0:00:00.064798", "end": "2024-04-16 22:14:12.017955", "item": {"key": "java_srvcs7", "value": {"java": "cs7", "name": "PcostIHM", "startid": 6}}, "rc": 0, "start": "2024-04-16 22:14:11.953157", "stderr": "", "stderr_lines": [], "stdout": "1", "stdout_lines": ["1"]}
+changed: [ANS_OLCSAP90] => (item={'key': 'java_srvcs8', 'value': {'startid': 7, 'name': 'CASABIC', 'java': 'cs8'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l", "delta": "0:00:00.069856", "end": "2024-04-16 22:14:12.387436", "item": {"key": "java_srvcs8", "value": {"java": "cs8", "name": "CASABIC", "startid": 7}}, "rc": 0, "start": "2024-04-16 22:14:12.317580", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+changed: [ANS_OLCSAP80] => (item={'key': 'java_srvcs8', 'value': {'startid': 7, 'name': 'CASABIC', 'java': 'cs8'}}) => {"ansible_loop_var": "item", "changed": true, "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l", "delta": "0:00:00.067407", "end": "2024-04-16 22:14:12.385431", "item": {"key": "java_srvcs8", "value": {"java": "cs8", "name": "CASABIC", "startid": 7}}, "rc": 0, "start": "2024-04-16 22:14:12.318024", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs4', 'value': {'startid': 99, 'name': 'ROUTAGES', 'java': 'cs4'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs4", "value": {"java": "cs4", "name": "ROUTAGES", "startid": 99}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs4', 'value': {'startid': 99, 'name': 'ROUTAGES', 'java': 'cs4'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs4", "value": {"java": "cs4", "name": "ROUTAGES", "startid": 99}}, "skip_reason": "Conditional result was False"}
 
-    - name: Exécution du Script de démarrage de Tomcat
-      shell: "source /app/cs/home/{{ user_applicatif }}/.bash_profile ; {{ PATH_TOM_BIN }}/{{ item.value.java }}.sh start"
-      become: yes
-      become_user: "{{ user_applicatif }}"
-      loop: "{{ lookup('dict', Tomcat_JVM)|sort(attribute='value.startid') }}"
-      when: 
-        - "item.value.name != 'ROUTAGES' or (isCasabic == 'yes' and item.value.name == 'CASABIC')"
-        - "NombreTomcatProcess.results | default([]) | map(attribute='stdout') | map('default', '0') | map('int') | select('>', 0) | list | count == 0"
+TASK [Debug NombreTomcatProcess] ***********************************************
+ok: [ANS_OLCSAP80] => {
+    "NombreTomcatProcess": {
+        "changed": true,
+        "msg": "All items completed",
+        "results": [
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l",
+                "delta": "0:00:00.092266",
+                "end": "2024-04-16 22:14:10.020940",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs6",
+                    "value": {
+                        "java": "cs6",
+                        "name": "OUTGOING",
+                        "startid": 1
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:09.928674",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l",
+                "delta": "0:00:00.070486",
+                "end": "2024-04-16 22:14:10.392812",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs1",
+                    "value": {
+                        "java": "cs1",
+                        "name": "INCOMING",
+                        "startid": 2
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:10.322326",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l",
+                "delta": "0:00:00.064218",
+                "end": "2024-04-16 22:14:10.747476",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs3",
+                    "value": {
+                        "java": "cs3",
+                        "name": "COMMUN",
+                        "startid": 3
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:10.683258",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l",
+                "delta": "0:00:00.062989",
+                "end": "2024-04-16 22:14:11.094935",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs5",
+                    "value": {
+                        "java": "cs5",
+                        "name": "BATCHS",
+                        "startid": 4
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.031946",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l",
+                "delta": "0:00:00.061961",
+                "end": "2024-04-16 22:14:11.441725",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs2",
+                    "value": {
+                        "java": "cs2",
+                        "name": "ENVOI",
+                        "startid": 5
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.379764",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l",
+                "delta": "0:00:00.064798",
+                "end": "2024-04-16 22:14:12.017955",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs7",
+                    "value": {
+                        "java": "cs7",
+                        "name": "PcostIHM",
+                        "startid": 6
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.953157",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "1",
+                "stdout_lines": [
+                    "1"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l",
+                "delta": "0:00:00.067407",
+                "end": "2024-04-16 22:14:12.385431",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs8",
+                    "value": {
+                        "java": "cs8",
+                        "name": "CASABIC",
+                        "startid": 7
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:12.318024",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": false,
+                "item": {
+                    "key": "java_srvcs4",
+                    "value": {
+                        "java": "cs4",
+                        "name": "ROUTAGES",
+                        "startid": 99
+                    }
+                },
+                "skip_reason": "Conditional result was False",
+                "skipped": true
+            }
+        ]
+    }
+}
+ok: [ANS_OLCSAP90] => {
+    "NombreTomcatProcess": {
+        "changed": true,
+        "msg": "All items completed",
+        "results": [
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l",
+                "delta": "0:00:00.078327",
+                "end": "2024-04-16 22:14:10.049748",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs6 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs6",
+                    "value": {
+                        "java": "cs6",
+                        "name": "OUTGOING",
+                        "startid": 1
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:09.971421",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l",
+                "delta": "0:00:00.068128",
+                "end": "2024-04-16 22:14:10.411721",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs1 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs1",
+                    "value": {
+                        "java": "cs1",
+                        "name": "INCOMING",
+                        "startid": 2
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:10.343593",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l",
+                "delta": "0:00:00.065089",
+                "end": "2024-04-16 22:14:10.762718",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs3 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs3",
+                    "value": {
+                        "java": "cs3",
+                        "name": "COMMUN",
+                        "startid": 3
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:10.697629",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l",
+                "delta": "0:00:00.069734",
+                "end": "2024-04-16 22:14:11.122392",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs5 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs5",
+                    "value": {
+                        "java": "cs5",
+                        "name": "BATCHS",
+                        "startid": 4
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.052658",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l",
+                "delta": "0:00:00.066948",
+                "end": "2024-04-16 22:14:11.470888",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs2 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs2",
+                    "value": {
+                        "java": "cs2",
+                        "name": "ENVOI",
+                        "startid": 5
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.403940",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l",
+                "delta": "0:00:00.065382",
+                "end": "2024-04-16 22:14:11.817707",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs7 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs7",
+                    "value": {
+                        "java": "cs7",
+                        "name": "PcostIHM",
+                        "startid": 6
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:11.752325",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "1",
+                "stdout_lines": [
+                    "1"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": true,
+                "cmd": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l",
+                "delta": "0:00:00.069856",
+                "end": "2024-04-16 22:14:12.387436",
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "ps -ef |grep /tools/list/product/java/bin/java_srvcs8 |grep -v grep|wc -l",
+                        "_uses_shell": true,
+                        "argv": null,
+                        "chdir": null,
+                        "creates": null,
+                        "executable": null,
+                        "removes": null,
+                        "stdin": null,
+                        "stdin_add_newline": true,
+                        "strip_empty_ends": true,
+                        "warn": true
+                    }
+                },
+                "item": {
+                    "key": "java_srvcs8",
+                    "value": {
+                        "java": "cs8",
+                        "name": "CASABIC",
+                        "startid": 7
+                    }
+                },
+                "rc": 0,
+                "start": "2024-04-16 22:14:12.317580",
+                "stderr": "",
+                "stderr_lines": [],
+                "stdout": "0",
+                "stdout_lines": [
+                    "0"
+                ]
+            },
+            {
+                "ansible_loop_var": "item",
+                "changed": false,
+                "item": {
+                    "key": "java_srvcs4",
+                    "value": {
+                        "java": "cs4",
+                        "name": "ROUTAGES",
+                        "startid": 99
+                    }
+                },
+                "skip_reason": "Conditional result was False",
+                "skipped": true
+            }
+        ]
+    }
+}
+
+TASK [Vérification si Tomcat est déjà démarré] *********************************
+ok: [ANS_OLCSAP80] => {
+    "msg": "Résultat : Tomcat est déjà démarré sur la partition OLCSAP80"
+}
+ok: [ANS_OLCSAP90] => {
+    "msg": "Résultat : Tomcat est déjà démarré sur la partition OLCSAP90"
+}
+
+TASK [Exécution du Script de démarrage de Tomcat] ******************************
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs6', 'value': {'startid': 1, 'name': 'OUTGOING', 'java': 'cs6'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs6", "value": {"java": "cs6", "name": "OUTGOING", "startid": 1}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs1', 'value': {'startid': 2, 'name': 'INCOMING', 'java': 'cs1'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs1", "value": {"java": "cs1", "name": "INCOMING", "startid": 2}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs3', 'value': {'startid': 3, 'name': 'COMMUN', 'java': 'cs3'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs3", "value": {"java": "cs3", "name": "COMMUN", "startid": 3}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs5', 'value': {'startid': 4, 'name': 'BATCHS', 'java': 'cs5'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs5", "value": {"java": "cs5", "name": "BATCHS", "startid": 4}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs2', 'value': {'startid': 5, 'name': 'ENVOI', 'java': 'cs2'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs2", "value": {"java": "cs2", "name": "ENVOI", "startid": 5}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs6', 'value': {'startid': 1, 'name': 'OUTGOING', 'java': 'cs6'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs6", "value": {"java": "cs6", "name": "OUTGOING", "startid": 1}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs7', 'value': {'startid': 6, 'name': 'PcostIHM', 'java': 'cs7'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs7", "value": {"java": "cs7", "name": "PcostIHM", "startid": 6}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs1', 'value': {'startid': 2, 'name': 'INCOMING', 'java': 'cs1'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs1", "value": {"java": "cs1", "name": "INCOMING", "startid": 2}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs8', 'value': {'startid': 7, 'name': 'CASABIC', 'java': 'cs8'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs8", "value": {"java": "cs8", "name": "CASABIC", "startid": 7}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs3', 'value': {'startid': 3, 'name': 'COMMUN', 'java': 'cs3'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs3", "value": {"java": "cs3", "name": "COMMUN", "startid": 3}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP80] => (item={'key': 'java_srvcs4', 'value': {'startid': 99, 'name': 'ROUTAGES', 'java': 'cs4'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs4", "value": {"java": "cs4", "name": "ROUTAGES", "startid": 99}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs5', 'value': {'startid': 4, 'name': 'BATCHS', 'java': 'cs5'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs5", "value": {"java": "cs5", "name": "BATCHS", "startid": 4}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs2', 'value': {'startid': 5, 'name': 'ENVOI', 'java': 'cs2'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs2", "value": {"java": "cs2", "name": "ENVOI", "startid": 5}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs7', 'value': {'startid': 6, 'name': 'PcostIHM', 'java': 'cs7'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs7", "value": {"java": "cs7", "name": "PcostIHM", "startid": 6}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs8', 'value': {'startid': 7, 'name': 'CASABIC', 'java': 'cs8'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs8", "value": {"java": "cs8", "name": "CASABIC", "startid": 7}}, "skip_reason": "Conditional result was False"}
+skipping: [ANS_OLCSAP90] => (item={'key': 'java_srvcs4', 'value': {'startid': 99, 'name': 'ROUTAGES', 'java': 'cs4'}})  => {"ansible_loop_var": "item", "changed": false, "item": {"key": "java_srvcs4", "value": {"java": "cs4", "name": "ROUTAGES", "startid": 99}}, "skip_reason": "Conditional result was False"}
+
+PLAY RECAP *********************************************************************
+ANS_OLCSAP80               : ok=6    changed=2    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+ANS_OLCSAP90               : ok=6    changed=2    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
