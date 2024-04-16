@@ -1,3 +1,43 @@
-fatal: [ANS_OLCSAP90]: FAILED! => {
-    "msg": "The conditional check 'NombreTomcatProcess.results | selectattr('stdout|int', '>', 0) | list | count > 0' failed. The error was: error while evaluating conditional (NombreTomcatProcess.results | selectattr('stdout|int', '>', 0) | list | count > 0): 'dict object' has no attribute 'stdout|int'. 'dict object' has no attribute 'stdout|int'\n\nThe error appears to be in '/runner/project/playbook-start.yaml': line 32, column 11, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n        - name: Vérification si Tomcat est déjà démarré\n          ^ here\n"
-}
+---
+- name: Test de connexion et exécution de commande sur serveur PCOST
+  hosts: start_tomcat
+  become: yes
+  become_user: olcsapad
+
+  tasks:
+    - name: Contrôle du bon démarrage du QMGR avant démarrage de l'application sur {{ ansible_hostname|upper }}
+      shell: "dspmq"
+      register: checkQMGR
+      retries: 8
+      delay: 20
+      until: checkQMGR is search("Running")
+
+    - debug:
+        msg: " {{ checkQMGR.stdout }} "
+      when: checkQMGR is search("Running")
+
+    - name: Failed si QMGR pas en état Running
+      fail:
+        msg: " {{ checkQMGR.stdout }} "
+      when: checkQMGR is not search("Running")
+
+    - block:
+        - name: Vérification des process de Tomcat avant démarrage
+          shell: "ps -ef |grep {{ PATH_JAVA_BIN }}/{{ item.key }} |grep -v grep|wc -l"
+          register: NombreTomcatProcess
+          loop: "{{ lookup('dict', Tomcat_JVM)|sort(attribute='value.startid') }}"
+          when: "item.value.name != 'ROUTAGES' or (isCasabic == 'yes' and item.value.name == 'CASABIC')"
+
+        - name: Vérification si Tomcat est déjà démarré
+          debug:
+            msg: "Résultat : Tomcat est déjà démarré sur la partition {{ ansible_hostname|upper }}"
+          when: "NombreTomcatProcess.results | map(attribute='stdout') | map('int') | select('>', 0) | list | count > 0"
+      
+    - name: Exécution du Script de démarrage de Tomcat
+      shell: "source /app/cs/home/{{ user_applicatif }}/.bash_profile ; {{ PATH_TOM_BIN }}/{{ item.value.java }}.sh start"
+      become: yes
+      become_user: "{{ user_applicatif }}"
+      loop: "{{ lookup('dict', Tomcat_JVM)|sort(attribute='value.startid') }}"
+      when: 
+        - "item.value.name != 'ROUTAGES' or (isCasabic == 'yes' and item.value.name == 'CASABIC')"
+        - "NombreTomcatProcess.results | map(attribute='stdout') | map('int') | select('>', 0) | list | count > 0"
