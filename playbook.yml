@@ -1,1 +1,13 @@
-source /app/cs/home/olcsapad/.bash_profile ; /tools/list/product/tomcat/bin/cs7.sh start
+---
+- name: Démarrage de Tomcat sur le serveur distant
+  hosts: vos_serveurs  # Remplacez 'vos_serveurs' par le nom de votre groupe d'hôtes ou un hôte spécifique dans votre inventaire Ansible
+  become: yes  # Utilisez 'become' si vous devez exécuter la commande en tant que superutilisateur
+  become_user: olcsapad  # L'utilisateur sous lequel exécuter la commande
+
+  tasks:
+    - name: Exécution de la commande de démarrage de Tomcat
+      ansible.builtin.shell: |
+        source /app/cs/home/olcsapad/.bash_profile
+        /tools/list/product/tomcat/bin/cs7.sh start
+      args:
+        executable: /bin/bash  # Spécifiez le shell à utiliser pour l'exécution de la commande
