@@ -1,23 +1,4 @@
-for ds in AdminConfig.list('DataSource').splitlines():
-    dsname = ds.split('(')[0]
-    # Log la valeur de dsname pour le débogage
-    print "dsname before clean-up: " + dsname
-    # Nettoyer la chaîne dsname pour éliminer les guillemets
-    dsname_cleaned = dsname.replace('"', '').strip()
-    # Log la valeur de dsname après le nettoyage
-    print "dsname after clean-up: " + dsname_cleaned
-    try:
-        # Construction de l'identifiant JMX sans guillemets et espace
-        dsid = AdminConfig.getid('DataSource:%s/' % dsname_cleaned)
-        if dsid:
-            print "Attempting to test connection for: " + dsid
-            try:
-                # Test de la connexion
-                status = AdminControl.testConnection(dsid)
-                print '%s: Connection successful' % dsname_cleaned
-            except Exception as e:
-                print '%s: Connection failed - %s' % (dsname_cleaned, str(e))
-        else:
-            print 'No Config ID found for DataSource: %s' % dsname_cleaned
-    except Exception as ex:
-        print 'An exception occurred for %s: %s' % (dsname_cleaned, str(ex))
+WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
+dsname before clean-up: "BPH Oracle XA DataSource
+dsname after clean-up: BPH Oracle XA DataSource
+WASX7017E: Exception received while running file "/tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_db_ht1sdd.py"; exception information: com.ibm.ws.scripting.ScriptingException: Invalid object name: DataSource:BPH Oracle XA DataSource/
