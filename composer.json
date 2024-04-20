@@ -1,8 +1,31 @@
-# Connect to the AdminConfig object and obtain a list of all data sources
+# Connect to the AdminConfig and AdminControl objects
 dataSources = AdminConfig.list('DataSource').splitlines()
 
-# Print the name of each data source
+# Print the name of each data source and test its connection
 for dataSource in dataSources:
     # Extract the name of the data source from the configuration ID
     dsName = AdminConfig.showAttribute(dataSource, 'name')
-    print(dsName)
+    
+    # Skip the DefaultEJBTimerDataSource
+    if dsName == "DefaultEJBTimerDataSource":
+        continue
+    
+    # Print the data source name
+    print("Data source name: " + dsName)
+    
+    # Get the JNDI name for the data source
+    jndiName = AdminConfig.showAttribute(dataSource, 'jndiName')
+    print("Testing connection for JNDI name: " + jndiName)
+    
+    # Obtain the data source ID for testing the connection
+    try:
+        # Create the ObjectName for testing the connection
+        objNameString = AdminControl.completeObjectName('type=DataSource,name=' + dsName + ',*')
+        if objNameString:
+            # Test the connection
+            result = AdminControl.testConnection(objNameString)
+            print("Connection successful for JNDI name: " + jndiName)
+        else:
+            print("Connection testing skipped for JNDI name: " + jndiName + " because no matching ObjectName found.")
+    except:
+        print("Connection failed for JNDI name: " + jndiName)
