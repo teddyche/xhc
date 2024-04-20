@@ -1,4 +1,8 @@
-WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
-dsname before clean-up: "BPH Oracle XA DataSource
-dsname after clean-up: BPH Oracle XA DataSource
-WASX7017E: Exception received while running file "/tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_db_ht1sdd.py"; exception information: com.ibm.ws.scripting.ScriptingException: Invalid object name: DataSource:BPH Oracle XA DataSource/
+# Connect to the AdminConfig object and obtain a list of all data sources
+dataSources = AdminConfig.list('DataSource').splitlines()
+
+# Print the name of each data source
+for dataSource in dataSources:
+    # Extract the name of the data source from the configuration ID
+    dsName = AdminConfig.showAttribute(dataSource, 'name')
+    print(dsName)
