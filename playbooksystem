@@ -1,1 +1,24 @@
-{"changed": true, "cmd": "free -m | awk 'NR==2{printf \"Mémoire utilisée: %s/%sMB (%.2f%%)\", $3, $2, $3*100/$2 } NR==3{printf \", Swap utilisé: %s/%sMB (%.2f%%)\", $3, $2, $3*100/$2}'\n", "delta": "0:00:00.014130", "end": "2024-04-28 21:11:30.936299", "msg": "non-zero return code", "rc": 2, "start": "2024-04-28 21:11:30.922169", "stderr": "awk: cmd. line:1: (FILENAME=- FNR=3) fatal: division by zero attempted", "stderr_lines": ["awk: cmd. line:1: (FILENAME=- FNR=3) fatal: division by zero attempted"], "stdout": "Mémoire utilisée: 31014/44088MB (70.35%)", "stdout_lines": ["Mémoire utilisée: 31014/44088MB (70.35%)"]}
+---
+- name: Vérification de l'utilisation du CPU, de la RAM et du swap
+  hosts: all
+  become: yes
+  tasks:
+    - name: Collecter les informations du CPU
+      ansible.builtin.shell: 
+        cmd: top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}'
+      register: cpu_usage
+
+    - name: Afficher l'utilisation du CPU
+      ansible.builtin.debug:
+        msg: "L'utilisation du CPU est de {{ cpu_usage.stdout }}%"
+
+    - name: Collecter les informations de la RAM et du swap
+      ansible.builtin.shell: 
+        cmd: >
+          free -m | awk 'NR==2{printf "Mémoire utilisée: %s/%sMB (%.2f%%)", $3, $2, $3*100/$2 }
+          NR==3{if ($2 > 0) {printf ", Swap utilisé: %s/%sMB (%.2f%%)", $3, $2, $3*100/$2} else {printf ", Swap utilisé: 0/0MB (0.00%%)"}}'
+      register: mem_usage
+
+    - name: Afficher l'utilisation de la RAM et du swap
+      ansible.builtin.debug:
+        msg: "{{ mem_usage.stdout }}"
