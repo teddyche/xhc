@@ -1,24 +1,32 @@
 ---
-- name: Vérification de l'utilisation du CPU, de la RAM et du swap
+- name: Vérification de l'utilisation du CPU, de la RAM et du swap sur IBM AIX
   hosts: all
   become: yes
   tasks:
     - name: Collecter les informations du CPU
       ansible.builtin.shell: 
-        cmd: top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}'
+        cmd: vmstat 1 2 | tail -1 | awk '{print 100 - $16"%"}'
       register: cpu_usage
 
     - name: Afficher l'utilisation du CPU
       ansible.builtin.debug:
-        msg: "L'utilisation du CPU est de {{ cpu_usage.stdout }}%"
+        msg: "L'utilisation du CPU est de {{ cpu_usage.stdout }}"
 
-    - name: Collecter les informations de la RAM et du swap
+    - name: Collecter les informations de la RAM
       ansible.builtin.shell: 
-        cmd: >
-          free -m | awk 'NR==2{printf "Mémoire utilisée: %s/%sMB (%.2f%%)", $3, $2, $3*100/$2 }
-          NR==3{if ($2 > 0) {printf ", Swap utilisé: %s/%sMB (%.2f%%)", $3, $2, $3*100/$2} else {printf ", Swap utilisé: 0/0MB (0.00%%)"}}'
-      register: mem_usage
+        cmd: svmon -G | grep memory | awk '{print "Mémoire utilisée: " $3 "MB de " $2 "MB"}'
+      register: ram_usage
 
-    - name: Afficher l'utilisation de la RAM et du swap
+    - name: Afficher l'utilisation de la RAM
       ansible.builtin.debug:
-        msg: "{{ mem_usage.stdout }}"
+        msg: "{{ ram_usage.stdout }}"
+
+    - name: Collecter les informations du swap
+      ansible.builtin.shell: 
+        cmd: lsps -s | awk '{print $2}' | grep -v 'Used'
+      register: swap_usage
+
+    - name: Afficher l'utilisation du swap
+      ansible.builtin.debug:
+        msg: "L'utilisation du swap est de {{ swap_usage.stdout }}"
+
