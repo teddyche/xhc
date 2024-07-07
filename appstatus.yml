@@ -1,8 +1,42 @@
-WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
-Running applications: Accueil3PG_EAR, CA3PG-API, CA3PG-HorsSag, CA3PG-Sag, CA3PGBankVisibility, CA3PGTestVisibility, bordereaux-ear, cedicam3pg-gpcc_ae, cedicam3pg-testVisibility, cedicam3pg_ae
-Stopped applications: ISAG-ear, SEPA_Generator_RB_2023_war, opfTracker_war
-WASX7017E: Exception received while running file "/tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_app_status.py"; exception information: com.ibm.bsf.BSFException: exception from Jython:
-Traceback (most recent call last):
-  File "<string>", line 21, in <module>
-SystemExit: 1
+---
+- name: Check WebSphere Application Status
+  hosts: websphere_servers
+  become: yes
+  tasks:
+    - name: Ensure wsadmin.sh is available
+      stat:
+        path: /path/to/WebSphere/AppServer/bin/wsadmin.sh
+      register: wsadmin_stat
 
+    - name: Fail if wsadmin.sh is not found
+      fail:
+        msg: "wsadmin.sh not found on the target server"
+      when: not wsadmin_stat.stat.exists
+
+    - name: Copy Jython script to the server
+      copy:
+        src: /path/to/local/check_app_status.py
+        dest: /path/to/remote/check_app_status.py
+        mode: '0755'
+
+    - name: Run the Jython script to check application status
+      shell: /path/to/WebSphere/AppServer/bin/wsadmin.sh -lang jython -f /path/to/remote/check_app_status.py
+      register: script_output
+      ignore_errors: yes
+
+    - name: Print script output
+      debug:
+        msg: "{{ script_output.stdout }}"
+
+    - name: List running applications
+      debug:
+        msg: "Running applications: {{ script_output.stdout | regex_search('Running applications: (.*)', '\\1') }}"
+
+    - name: List stopped applications
+      debug:
+        msg: "Stopped applications: {{ script_output.stdout | regex_search('Stopped applications: (.*)', '\\1') }}"
+
+    - name: Fail if any applications are not running
+      fail:
+        msg: "Some applications are not running: {{ script_output.stdout | regex_search('Stopped applications: (.*)', '\\1') }}"
+      when: script_output.rc != 0
