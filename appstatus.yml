@@ -1,13 +1,14 @@
-# check_app_status.py
-# Script to check the status of all applications in WebSphere Application Server
-
-# Get the list of all applications
-applications = AdminApp.list().splitlines()
-
-# Loop through each application and check its status
-for app in applications:
-    app_status = AdminControl.queryNames('type=Application,name=' + app + ',*')
-    if app_status:
-        print("Application {} is running".format(app))
-    else:
-        print("Application {} is stopped".format(app))
+WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
+Application Accueil3PG_EAR is running
+Application CA3PG-API is running
+Application CA3PG-HorsSag is running
+Application CA3PG-Sag is running
+Application CA3PGBankVisibility is running
+Application CA3PGTestVisibility is running
+Application ISAG-ear is stopped
+Application SEPA_Generator_RB_2023_war is running
+Application bordereaux-ear is running
+Application cedicam3pg-gpcc_ae is running
+Application cedicam3pg-testVisibility is running
+Application cedicam3pg_ae is running
+Application opfTracker_war is running
