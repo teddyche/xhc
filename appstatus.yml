@@ -15,11 +15,19 @@ for server in servers:
     serverName = parts[0].strip()
     nodeName = parts[1].split(')')[0].strip()
     
-    server_status = AdminControl.completeObjectName('type=Server,node={},name={},*'.format(nodeName, serverName))
-
-    if server_status:
-        running_servers.append("{} on {}".format(serverName, nodeName))
-    else:
+    # Build the query to find the server MBean
+    query = 'WebSphere:type=Server,node={},name={}'.format(nodeName, serverName)
+    try:
+        server_status = AdminControl.completeObjectName(query)
+        if server_status:
+            state = AdminControl.getAttribute(server_status, 'state')
+            if state == 'STARTED':
+                running_servers.append("{} on {}".format(serverName, nodeName))
+            else:
+                stopped_servers.append("{} on {}".format(serverName, nodeName))
+        else:
+            stopped_servers.append("{} on {}".format(serverName, nodeName))
+    except:
         stopped_servers.append("{} on {}".format(serverName, nodeName))
 
 print("Running servers: {}".format(", ".join(running_servers)))
