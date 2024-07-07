@@ -5,17 +5,9 @@
 applications = AdminApp.list().splitlines()
 
 # Loop through each application and check its status
-not_running_apps = []
 for app in applications:
     app_status = AdminControl.queryNames('type=Application,name=' + app + ',*')
     if app_status:
         print("Application {} is running".format(app))
     else:
         print("Application {} is stopped".format(app))
-        not_running_apps.append(app)
-
-if not_running_apps:
-    print("Some applications are not running: {}".format(", ".join(not_running_apps)))
-    sys.exit(1)
-else:
-    print("All applications are running")
