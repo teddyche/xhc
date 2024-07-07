@@ -1,14 +1,31 @@
-WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
-Application Accueil3PG_EAR is running
-Application CA3PG-API is running
-Application CA3PG-HorsSag is running
-Application CA3PG-Sag is running
-Application CA3PGBankVisibility is running
-Application CA3PGTestVisibility is running
-Application ISAG-ear is stopped
-Application SEPA_Generator_RB_2023_war is running
-Application bordereaux-ear is running
-Application cedicam3pg-gpcc_ae is running
-Application cedicam3pg-testVisibility is running
-Application cedicam3pg_ae is running
-Application opfTracker_war is running
+# check_app_status.py
+# Script to check the status of all applications in WebSphere Application Server
+
+# Function to get the status of an application
+def getApplicationStatus(appName):
+    # Get the list of application manager MBeans
+    appManager = AdminControl.queryNames('type=ApplicationManager,process=*')
+    
+    # Check each application manager for the status of the application
+    for manager in appManager.splitlines():
+        # Query the status of the application
+        status = AdminControl.invoke(manager, 'getApplicationStatus', appName)
+        if status == 'Running':
+            return 'running'
+    return 'stopped'
+
+# Get the list of all applications
+applications = AdminApp.list().splitlines()
+
+# Loop through each application and check its status
+not_running_apps = []
+for app in applications:
+    status = getApplicationStatus(app)
+    if status != 'running':
+        not_running_apps.append(app)
+
+if not_running_apps:
+    print("Some applications are not running: {}".format(", ".join(not_running_apps)))
+    sys.exit(1)
+else:
+    print("All applications are running")
