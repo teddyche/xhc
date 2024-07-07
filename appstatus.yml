@@ -16,18 +16,19 @@ for server in servers:
     nodeName = parts[1].split(')')[0].strip()
     
     # Build the query to find the server MBean
-    query = 'WebSphere:type=Server,node={},name={}'.format(nodeName, serverName)
-    try:
-        server_status = AdminControl.completeObjectName(query)
-        if server_status:
-            state = AdminControl.getAttribute(server_status, 'state')
+    query = 'type=Server,node={},name={},*'.format(nodeName, serverName)
+    server_status = AdminControl.completeObjectName(query)
+
+    if server_status:
+        try:
+            state = AdminControl.invoke(server_status, 'getState')
             if state == 'STARTED':
                 running_servers.append("{} on {}".format(serverName, nodeName))
             else:
                 stopped_servers.append("{} on {}".format(serverName, nodeName))
-        else:
+        except:
             stopped_servers.append("{} on {}".format(serverName, nodeName))
-    except:
+    else:
         stopped_servers.append("{} on {}".format(serverName, nodeName))
 
 print("Running servers: {}".format(", ".join(running_servers)))
@@ -38,3 +39,4 @@ if stopped_servers:
     sys.exit(1)
 else:
     print("All servers are running. Exiting with code 0.")
+    sys.exit(0)
