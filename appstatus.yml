@@ -1,4 +1,32 @@
-WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
-WASX7017E: Exception received while running file "/tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_jvm.py"; exception information: com.ibm.bsf.BSFException: exception from Jython:
-SyntaxError: ("no viable alternative at input ''node={nodeName},type=Server,name={serverName},*''", ('<string>', 16, 45, "    server_status = AdminControl.queryNames(f'node={nodeName},type=Server,name={serverName},*')\n"))
-; SyntaxError: no viable alternative at input ''node={nodeName},type=Server,name={serverName},*'' (<string>, line 16)
+# check_server_status.py
+# Script to check the status of all WebSphere Application Servers
+
+import sys
+
+# Get the list of all servers and their nodes
+servers = AdminTask.listServers('[-serverType APPLICATION_SERVER]').splitlines()
+
+running_servers = []
+stopped_servers = []
+
+# Check the status of each server
+for server in servers:
+    parts = server.split('(')
+    serverName = parts[0].strip()
+    nodeName = parts[1].split(')')[0].strip()
+    
+    server_status = AdminControl.queryNames('node={},type=Server,name={},*'.format(nodeName, serverName))
+
+    if server_status:
+        running_servers.append("{} on {}".format(serverName, nodeName))
+    else:
+        stopped_servers.append("{} on {}".format(serverName, nodeName))
+
+print("Running servers: {}".format(", ".join(running_servers)))
+print("Stopped servers: {}".format(", ".join(stopped_servers)))
+
+if stopped_servers:
+    print("Exiting with code 1 due to stopped servers.")
+    sys.exit(1)
+else:
+    print("All servers are running. Exiting with code 0.")
