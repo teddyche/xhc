@@ -1,10 +1,27 @@
-[was9adm@hayatf11] [/tools/was/var/9.0.5/hvyatf10_dmgr/bin]# ./wsadmin.sh -lang jython -f /tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_app_status.py -username was9adm -password was9adm
-WASX7209I: Connected to process "dmgr" on node hvyatf10_dmgr using SOAP connector;  The type of process is: DeploymentManager
-Running applications: Accueil3PG_EAR, CA3PG-API, CA3PG-HorsSag, CA3PG-Sag, CA3PGBankVisibility, CA3PGTestVisibility, ISAG-ear, SEPA_Generator_RB_2023_war, bordereaux-ear, cedicam3pg-gpcc_ae, cedicam3pg-testVisibility, cedicam3pg_ae, opfTracker_war
-Stopped applications:
-WASX7017E: Exception received while running file "/tmp/nfs/projects/EXE_Echanges_Financiers/SEPA/ANSIBLE/jython/check_app_status.py"; exception information: com.ibm.bsf.BSFException: exception from Jython:
-Traceback (most recent call last):
-  File "<string>", line 23, in <module>
-SystemExit: 0
+# check_app_status.py
+# Script to check the status of all applications in WebSphere Application Server
 
-[was9adm@hayatf11] [/tools/was/var/9.0.5/hvyatf10_dmgr/bin]#
+import sys
+
+# Get the list of all applications
+applications = AdminApp.list().splitlines()
+
+# Loop through each application and check its status
+running_apps = []
+stopped_apps = []
+for app in applications:
+    app_status = AdminControl.queryNames('type=Application,name=' + app + ',*')
+    if app_status:
+        running_apps.append(app)
+    else:
+        stopped_apps.append(app)
+
+print("Running applications: {}".format(", ".join(running_apps)))
+print("Stopped applications: {}".format(", ".join(stopped_apps)))
+
+if stopped_apps:
+    print("Exiting with code 1 due to stopped applications.")
+    sys.exit(1)
+else:
+    print("All applications are running. Exiting with code 0.")
+    sys.exit(0)
