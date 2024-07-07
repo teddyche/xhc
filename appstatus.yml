@@ -1,27 +1,31 @@
-# check_app_status.py
-# Script to check the status of all applications in WebSphere Application Server
+# check_server_status.py
+# Script to check the status of all WebSphere Application Servers
 
 import sys
 
-# Get the list of all applications
-applications = AdminApp.list().splitlines()
+# Get the list of all servers
+servers = AdminConfig.list('Server').splitlines()
 
-# Loop through each application and check its status
-running_apps = []
-stopped_apps = []
-for app in applications:
-    app_status = AdminControl.queryNames('type=Application,name=' + app + ',*')
-    if app_status:
-        running_apps.append(app)
+running_servers = []
+stopped_servers = []
+
+# Check the status of each server
+for server in servers:
+    serverName = AdminConfig.showAttribute(server, 'name')
+    nodeName = AdminControl.getAttribute(server, 'nodeName')
+    server_status = AdminControl.queryNames(f'node={nodeName},type=Server,name={serverName},*')
+
+    if server_status:
+        running_servers.append(f"{serverName} on {nodeName}")
     else:
-        stopped_apps.append(app)
+        stopped_servers.append(f"{serverName} on {nodeName}")
 
-print("Running applications: {}".format(", ".join(running_apps)))
-print("Stopped applications: {}".format(", ".join(stopped_apps)))
+print("Running servers: {}".format(", ".join(running_servers)))
+print("Stopped servers: {}".format(", ".join(stopped_servers)))
 
-if stopped_apps:
-    print("Exiting with code 1 due to stopped applications.")
+if stopped_servers:
+    print("Exiting with code 1 due to stopped servers.")
     sys.exit(1)
 else:
-    print("All applications are running. Exiting with code 0.")
+    print("All servers are running. Exiting with code 0.")
     sys.exit(0)
