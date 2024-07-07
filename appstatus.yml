@@ -1,0 +1,23 @@
+# check_app_status.py
+# Script to check the status of all applications in WebSphere Application Server
+
+# Function to get the status of an application
+def getApplicationStatus(appName):
+    # Get the list of application manager MBeans
+    appManager = AdminControl.queryNames('type=ApplicationManager,process=*')
+    
+    # Check each application manager for the status of the application
+    for manager in appManager.splitlines():
+        # Query the status of the application
+        status = AdminControl.invoke(manager, 'getApplicationStatus', appName)
+        if status == 'Running':
+            return 'running'
+    return 'stopped'
+
+# Get the list of all applications
+applications = AdminApp.list().splitlines()
+
+# Loop through each application and check its status
+for app in applications:
+    status = getApplicationStatus(app)
+    print("Application {} is {}".format(app, status))
