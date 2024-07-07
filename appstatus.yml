@@ -1,42 +1,23 @@
----
-- name: Check WebSphere Application Status
-  hosts: websphere_servers
-  become: yes
-  tasks:
-    - name: Ensure wsadmin.sh is available
-      stat:
-        path: /path/to/WebSphere/AppServer/bin/wsadmin.sh
-      register: wsadmin_stat
+# check_app_status.py
+# Script to check the status of all applications in WebSphere Application Server
 
-    - name: Fail if wsadmin.sh is not found
-      fail:
-        msg: "wsadmin.sh not found on the target server"
-      when: not wsadmin_stat.stat.exists
+# Get the list of all applications
+applications = AdminApp.list().splitlines()
 
-    - name: Copy Jython script to the server
-      copy:
-        src: /path/to/local/check_app_status.py
-        dest: /path/to/remote/check_app_status.py
-        mode: '0755'
+# Loop through each application and check its status
+running_apps = []
+stopped_apps = []
+for app in applications:
+    app_status = AdminControl.queryNames('type=Application,name=' + app + ',*')
+    if app_status:
+        running_apps.append(app)
+    else:
+        stopped_apps.append(app)
 
-    - name: Run the Jython script to check application status
-      shell: /path/to/WebSphere/AppServer/bin/wsadmin.sh -lang jython -f /path/to/remote/check_app_status.py
-      register: script_output
-      ignore_errors: yes
+print("Running applications: {}".format(", ".join(running_apps)))
+print("Stopped applications: {}".format(", ".join(stopped_apps)))
 
-    - name: Print script output
-      debug:
-        msg: "{{ script_output.stdout }}"
-
-    - name: List running applications
-      debug:
-        msg: "Running applications: {{ script_output.stdout | regex_search('Running applications: (.*)', '\\1') }}"
-
-    - name: List stopped applications
-      debug:
-        msg: "Stopped applications: {{ script_output.stdout | regex_search('Stopped applications: (.*)', '\\1') }}"
-
-    - name: Fail if any applications are not running
-      fail:
-        msg: "Some applications are not running: {{ script_output.stdout | regex_search('Stopped applications: (.*)', '\\1') }}"
-      when: script_output.rc != 0
+if stopped_apps:
+    sys.exit(1)
+else:
+    sys.exit(0)
